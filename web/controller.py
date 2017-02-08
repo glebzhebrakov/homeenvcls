@@ -1,7 +1,7 @@
-from flask import request
 from flask import abort
+from flask import request
 
-from web.service import classify_image
+from service.classifyService import classify_image
 
 
 def configure(app):
