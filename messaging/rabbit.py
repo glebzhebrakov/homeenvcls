@@ -1,4 +1,7 @@
 import pika
+import json
+
+from service.classifyService import classify_image
 
 host = 'localhost'
 port = 5672
@@ -13,7 +16,10 @@ def get_connection():
 
 
 def callback(ch, method, properties, body):
-    send_response("ok")
+    print (body)
+    resp = {'path': 'ok path'}
+    classify_image(json.loads(body)['path'])
+    send_response(resp)
 
 
 def begin_consuming():
@@ -31,6 +37,7 @@ def send_response(response):
     channel = conn.channel()
     channel.basic_publish(exchange='',
                           routing_key=queueIndexingResponses,
-                          body=response)
+                          body=json.dumps(response))
     conn.close()
+
 
