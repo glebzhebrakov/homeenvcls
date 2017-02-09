@@ -8,6 +8,7 @@ from messaging.rabbit import begin_consuming
 from service.classificationService import classify_image
 from web.controller import configure
 
+begin_consuming()
 # rabbitThread = threading.Thread(target=begin_consuming)
 # rabbitThread.start()
 #
@@ -16,5 +17,5 @@ from web.controller import configure
 # configure(app).run()
 
 
-classify_image("/home/gzhebrakov/Pictures/20160616-SummerParty/IMG_4013_1.jpg")
+#classify_image("/home/dominator/Desktop/1486567387_1.jpg")
 

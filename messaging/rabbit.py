@@ -16,10 +16,17 @@ def get_connection():
 
 
 def callback(ch, method, properties, body):
-    print (body)
-    resp = {'path': 'ok path'}
-    classify_image(json.loads(body)['path'])
-    send_response(resp)
+    path = json.loads(body)['path']
+    hash = json.loads(body)['hash']
+    print('analyse image ' + path)
+    try:
+        send_response({
+            'path': path,
+            'hash': hash,
+            'classificationResult': classify_image(path)}
+        )
+    except Exception as e:
+        print e
 
 
 def begin_consuming():
@@ -29,7 +36,10 @@ def begin_consuming():
     channel.basic_consume(callback,
                           queue=queueIndexingRequests,
                           no_ack=True)
-    channel.start_consuming()
+    try:
+        channel.start_consuming()
+    except:
+        channel.start_consuming()
 
 
 def send_response(response):
@@ -39,5 +49,3 @@ def send_response(response):
                           routing_key=queueIndexingResponses,
                           body=json.dumps(response))
     conn.close()
-
-
