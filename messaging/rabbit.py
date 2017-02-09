@@ -1,7 +1,7 @@
 import pika
 import json
 
-from service.classifyService import classify_image
+from service.classificationService import classify_image
 
 host = 'localhost'
 port = 5672
