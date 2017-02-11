@@ -1,5 +1,8 @@
+import logging
 import pika
 import json
+
+import time
 
 from service.classificationService import classify_image
 
@@ -7,6 +10,8 @@ host = 'localhost'
 port = 5672
 queueIndexingRequests = 'indexing_requests'
 queueIndexingResponses = 'indexing_responses'
+
+logger = logging.getLogger('homeenvcls')
 
 
 def get_connection():
@@ -17,29 +22,44 @@ def get_connection():
 
 def callback(ch, method, properties, body):
     path = json.loads(body)['path']
-    hash = json.loads(body)['hash']
-    print('analyse image ' + path)
+    imagehash = json.loads(body)['hash']
+    logger.info('analyse image ' + path)
+
     try:
         send_response({
             'path': path,
-            'hash': hash,
+            'hash': imagehash,
             'classificationResult': classify_image(path)}
         )
+        ch.basic_ack(delivery_tag = method.delivery_tag)
     except Exception as e:
-        print e
+        # logger.warning('Protocol problem: %s', 'connection reset')
+
+        send_response({
+            'path': path,
+            'hash': imagehash,
+            'error': e.message}
+        )
+        ch.basic_ack(delivery_tag = method.delivery_tag)
+        logger.error(e)
 
 
 def begin_consuming():
-    conn = get_connection()
-    channel = conn.channel()
 
-    channel.basic_consume(callback,
-                          queue=queueIndexingRequests,
-                          no_ack=True)
-    try:
-        channel.start_consuming()
-    except:
-        channel.start_consuming()
+    while True:
+        try:
+            logger.info("Connecting to rabbit")
+            conn = get_connection()
+            channel = conn.channel()
+            channel.basic_consume(callback,
+                                  queue=queueIndexingRequests,
+                                  no_ack=False)
+            channel.start_consuming()
+        except Exception as e:
+            logger.error("Lost connection, reconnecting")
+            logger.error(e)
+            time.sleep(10)
+        continue
 
 
 def send_response(response):
@@ -48,4 +68,6 @@ def send_response(response):
     channel.basic_publish(exchange='',
                           routing_key=queueIndexingResponses,
                           body=json.dumps(response))
+
     conn.close()
+

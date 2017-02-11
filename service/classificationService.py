@@ -1,5 +1,13 @@
+import logging
+
 from classification.classify_image import classify
+
+logger = logging.getLogger('homeenvcls')
 
 
 def classify_image(path):
-    return classify(path)
+    try:
+        return classify(path)
+    except Exception as e:
+        # logger.warning('Protocol problem: %s', 'connection reset')
+        logger.error(e)
