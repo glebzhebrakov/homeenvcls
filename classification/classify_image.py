@@ -53,6 +53,7 @@ DATA_URL = 'http://download.tensorflow.org/models/image/imagenet/inception-2015-
 
 # pylint: enable=line-too-long
 
+graphLoaded = False
 
 class NodeLookup(object):
     """Converts integer node ID's to human readable labels."""
@@ -122,11 +123,15 @@ class NodeLookup(object):
 def create_graph():
     """Creates a graph from saved GraphDef file and returns a saver."""
     # Creates graph from saved graph_def.pb.
-    with tf.gfile.FastGFile(os.path.join(
-            FLAGS.model_dir, 'classify_image_graph_def.pb'), 'rb') as f:
-        graph_def = tf.GraphDef()
-        graph_def.ParseFromString(f.read())
-        _ = tf.import_graph_def(graph_def, name='')
+    global graphLoaded
+    if not graphLoaded:
+        with tf.gfile.FastGFile(os.path.join(
+                FLAGS.model_dir, 'classify_image_graph_def.pb'), 'rb') as f:
+            graph_def = tf.GraphDef()
+            graph_def.ParseFromString(f.read())
+            _ = tf.import_graph_def(graph_def, name='')
+            graphLoaded = True
+
 
 
 def run_inference_on_image(image):
@@ -145,6 +150,7 @@ def run_inference_on_image(image):
     # Creates graph from saved GraphDef.
     create_graph()
 
+    res = []
     with tf.Session() as sess:
         # Some useful tensors:
         # 'softmax:0': A tensor containing the normalized prediction across
@@ -164,13 +170,14 @@ def run_inference_on_image(image):
 
         top_k = predictions.argsort()[-FLAGS.num_top_predictions:][::-1]
 
-        res = []
         for node_id in top_k:
             human_string = node_lookup.id_to_string(node_id)
             score = predictions[node_id]
             print('%s (score = %.5f)' % (human_string, score))
             res.append((human_string, '%.5f' % score))
-        return res
+        sess.close()
+    return res
+
 
 
 def maybe_download_and_extract():
