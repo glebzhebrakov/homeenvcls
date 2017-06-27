@@ -8,7 +8,7 @@ import time
 from service.classificationService import classify_image
 
 indexing_storage_mapping='/mnt/indexing/'
-host = 'localhost'
+host = 'rabbitmq'
 port = 5672
 queueIndexingRequests = 'indexing_requests'
 queueIndexingResponses = 'indexing_responses'
