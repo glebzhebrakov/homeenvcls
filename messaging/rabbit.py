@@ -1,12 +1,14 @@
 import logging
+from os.path import normpath
+
 import pika
 import json
-
 import time
 
 from service.classificationService import classify_image
 
-host = 'rabbitmq'
+indexing_storage_mapping='/mnt/indexing/'
+host = 'localhost'
 port = 5672
 queueIndexingRequests = 'indexing_requests'
 queueIndexingResponses = 'indexing_responses'
@@ -22,6 +24,8 @@ def get_connection():
 
 def callback(ch, method, properties, body):
     path = json.loads(body)['path']
+    realIndexingPath = json.loads(body)['indexingDirectory']
+    normalized = normpath(path.replace(realIndexingPath, indexing_storage_mapping))
     imagehash = json.loads(body)['hash']
     logger.info('analyse image ' + path)
 
@@ -29,7 +33,7 @@ def callback(ch, method, properties, body):
         send_response({
             'path': path,
             'hash': imagehash,
-            'classificationResult': classify_image(path)}
+            'classificationResult': classify_image(normalized)}
         )
         ch.basic_ack(delivery_tag = method.delivery_tag)
     except Exception as e:
