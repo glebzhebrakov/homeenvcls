@@ -6,7 +6,7 @@ import time
 
 from service.classificationService import classify_image
 
-host = 'localhost'
+host = 'rabbitmq'
 port = 5672
 queueIndexingRequests = 'indexing_requests'
 queueIndexingResponses = 'indexing_responses'
